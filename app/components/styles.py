@@ -556,6 +556,110 @@ def inject_css() -> None:
             margin-top: 16px;
         }
 
+        /* ══════════════════════════════════════════════════════════════════
+           PRESET BUTTONS
+           ══════════════════════════════════════════════════════════════════ */
+        div.stButton > button[kind="secondary"] {
+            border-radius: 10px !important;
+            border: 1px solid #E2E8F0 !important;
+            background: #FFFFFF !important;
+            color: #475569 !important;
+            font-size: 0.78rem !important;
+            font-weight: 600 !important;
+            padding: 8px 12px !important;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        div.stButton > button[kind="secondary"]:hover {
+            border-color: #3B82F6 !important;
+            color: #1D4ED8 !important;
+            background: #EFF6FF !important;
+            box-shadow: 0 2px 8px rgba(59,130,246,0.12) !important;
+            transform: translateY(-1px);
+        }
+
+        /* ══════════════════════════════════════════════════════════════════
+           DARK MODE TOGGLE
+           ══════════════════════════════════════════════════════════════════ */
+        .theme-toggle {
+            position: fixed;
+            top: 12px;
+            right: 16px;
+            z-index: 9999;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid #E2E8F0;
+            border-radius: 50%;
+            width: 38px; height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .theme-toggle:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            transform: scale(1.08);
+        }
+
+        /* ── Dark mode overrides ─────────────────────────────────────────── */
+        .stApp[data-theme="dark"] { background: #0F172A !important; }
+        .stApp[data-theme="dark"] .hero { background: linear-gradient(135deg, #020617 0%, #0F172A 50%, #1E3A5F 100%) !important; }
+        .stApp[data-theme="dark"] .card,
+        .stApp[data-theme="dark"] .info-card,
+        .stApp[data-theme="dark"] div[data-testid="metric-container"],
+        .stApp[data-theme="dark"] .prob-card,
+        .stApp[data-theme="dark"] div.stButton > button[kind="secondary"] {
+            background: #1E293B !important;
+            border-color: #334155 !important;
+            color: #E2E8F0 !important;
+        }
+        .stApp[data-theme="dark"] div[data-baseweb="tab-list"] {
+            background: #1E293B !important;
+            border-color: #334155 !important;
+        }
+        .stApp[data-theme="dark"] div[data-baseweb="tab"] {
+            color: #94A3B8 !important;
+        }
+        .stApp[data-theme="dark"] div[data-baseweb="tab"][aria-selected="true"] {
+            background: linear-gradient(135deg, #1E3A5F, #1D4ED8) !important;
+            color: #FFFFFF !important;
+        }
+        .stApp[data-theme="dark"] .card-title,
+        .stApp[data-theme="dark"] .section-header,
+        .stApp[data-theme="dark"] .prob-card-label {
+            color: #64748B !important;
+        }
+        .stApp[data-theme="dark"] .info-card-heading,
+        .stApp[data-theme="dark"] .timeline-title {
+            color: #F1F5F9 !important;
+        }
+        .stApp[data-theme="dark"] .info-card-body,
+        .stApp[data-theme="dark"] .timeline-desc {
+            color: #94A3B8 !important;
+        }
+        .stApp[data-theme="dark"] .prob-card-value { color: #E2E8F0 !important; }
+        .stApp[data-theme="dark"] div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
+            color: #E2E8F0 !important;
+        }
+        .stApp[data-theme="dark"] .empty-state {
+            background: linear-gradient(135deg, #1E293B, #0F172A) !important;
+            border-color: #334155 !important;
+        }
+        .stApp[data-theme="dark"] .empty-state-title { color: #E2E8F0 !important; }
+        .stApp[data-theme="dark"] .disclaimer {
+            background: #1E293B !important;
+            border-color: #334155 !important;
+            color: #94A3B8 !important;
+        }
+        .stApp[data-theme="dark"] .timeline-step:hover { background: #0F172A !important; }
+        .stApp[data-theme="dark"] .risk-low { background: linear-gradient(135deg, #064E3B, #065F46) !important; color: #A7F3D0 !important; border-color: #065F46 !important; }
+        .stApp[data-theme="dark"] .risk-medium { background: linear-gradient(135deg, #78350F, #92400E) !important; color: #FDE68A !important; border-color: #92400E !important; }
+        .stApp[data-theme="dark"] .risk-high { background: linear-gradient(135deg, #7F1D1D, #991B1B) !important; color: #FECACA !important; border-color: #991B1B !important; }
+        .stApp[data-theme="dark"] .theme-toggle { background: rgba(30,41,59,0.9) !important; border-color: #334155 !important; }
+
         /* ── Responsive ──────────────────────────────────────────────────── */
         @media (max-width: 768px) {
             .hero { padding: 2rem 1.5rem 1.5rem; }

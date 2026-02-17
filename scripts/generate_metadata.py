@@ -12,7 +12,13 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, f1_score, roc_auc_score
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    roc_auc_score,
+    roc_curve,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
@@ -71,6 +77,7 @@ def main():
     )
 
     model_comparison = []
+    roc_curves = {}
     best_pipeline = None
     best_auc = 0.0
 
@@ -88,6 +95,15 @@ def main():
         auc = roc_auc_score(y_test, y_proba)
         acc = (y_test == y_pred).mean()
 
+        # Store ROC curve points (downsample to ~50 points for JSON size)
+        fpr, tpr, _ = roc_curve(y_test, y_proba)
+        step = max(1, len(fpr) // 50)
+        roc_curves[name.replace("_", " ").title()] = {
+            "fpr": [round(float(x), 4) for x in fpr[::step]],
+            "tpr": [round(float(x), 4) for x in tpr[::step]],
+            "auc": round(float(auc), 4),
+        }
+
         model_comparison.append({
             "model": name.replace("_", " ").title(),
             "accuracy": round(float(acc), 4),
@@ -101,6 +117,7 @@ def main():
             best_auc = auc
             best_acc = acc
             y_pred_best  = y_pred
+            y_proba_best = y_proba
 
         print(f"  {name}: F1={f1:.3f}, AUC={auc:.3f}")
 
@@ -112,6 +129,9 @@ def main():
 
     # Classification report
     cr = classification_report(y_test, y_pred_best, target_names=["Negative", "Positive"], output_dict=True)
+
+    # Confusion matrix
+    cm = confusion_matrix(y_test, y_pred_best).tolist()
 
     metadata = {
         "model_name":    "Random Forest",
@@ -129,6 +149,8 @@ def main():
         },
         "feature_importances": importances,
         "classification_report": cr,
+        "confusion_matrix": cm,
+        "roc_curves": roc_curves,
         "model_comparison": model_comparison,
     }
 

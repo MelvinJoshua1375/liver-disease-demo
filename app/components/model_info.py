@@ -1,7 +1,8 @@
-"""Model Performance tab: KPI metrics, comparison table, feature importances."""
+"""Model Performance tab: KPI metrics, ROC curves, confusion matrix, comparisons."""
 
 import pandas as pd
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import streamlit as st
 
 from components.utils import load_metadata
@@ -15,6 +16,105 @@ _MODEL_COMPARISON = [
     {"Model": "DT + LR Hybrid", "Accuracy": 0.890, "F1 (Weighted)": 0.890, "ROC AUC": 0.960},
 ]
 
+_ROC_COLORS = {
+    "Logistic Regression": "#94A3B8",
+    "Decision Tree": "#CBD5E1",
+    "Svc": "#64748B",
+    "Naive Bayes": "#E2E8F0",
+    "Random Forest": "#1D4ED8",
+}
+
+
+def _roc_chart(meta: dict) -> go.Figure | None:
+    """Interactive multi-model ROC curve plot."""
+    roc_data = meta.get("roc_curves", {})
+    if not roc_data:
+        return None
+
+    fig = go.Figure()
+
+    # Diagonal reference
+    fig.add_trace(go.Scatter(
+        x=[0, 1], y=[0, 1],
+        mode="lines",
+        line={"color": "#E2E8F0", "width": 1, "dash": "dash"},
+        showlegend=False,
+        hoverinfo="skip",
+    ))
+
+    for model_name, data in roc_data.items():
+        color = _ROC_COLORS.get(model_name, "#94A3B8")
+        width = 3 if model_name == "Random Forest" else 1.5
+        fig.add_trace(go.Scatter(
+            x=data["fpr"], y=data["tpr"],
+            mode="lines",
+            name=f"{model_name} (AUC={data['auc']:.3f})",
+            line={"color": color, "width": width},
+            hovertemplate=f"<b>{model_name}</b><br>FPR: %{{x:.3f}}<br>TPR: %{{y:.3f}}<extra></extra>",
+        ))
+
+    fig.update_layout(
+        height=380,
+        margin={"t": 16, "b": 48, "l": 48, "r": 16},
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"family": "Inter", "size": 11},
+        legend={
+            "orientation": "h",
+            "yanchor": "top", "y": -0.15,
+            "xanchor": "center", "x": 0.5,
+            "font": {"size": 10},
+        },
+        xaxis={
+            "title": "False Positive Rate",
+            "titlefont": {"size": 11, "color": "#64748B"},
+            "showgrid": True, "gridcolor": "#F1F5F9",
+            "zeroline": False,
+            "tickfont": {"color": "#94A3B8"},
+        },
+        yaxis={
+            "title": "True Positive Rate",
+            "titlefont": {"size": 11, "color": "#64748B"},
+            "showgrid": True, "gridcolor": "#F1F5F9",
+            "zeroline": False,
+            "tickfont": {"color": "#94A3B8"},
+        },
+    )
+    return fig
+
+
+def _confusion_matrix_chart(meta: dict) -> go.Figure | None:
+    """Plotly heatmap confusion matrix."""
+    cm = meta.get("confusion_matrix")
+    if not cm:
+        return None
+
+    labels = ["Negative", "Positive"]
+    # Annotations with counts and percentages
+    total = sum(sum(row) for row in cm)
+    text = [[f"{cm[i][j]}<br>({cm[i][j]/total:.1%})" for j in range(2)] for i in range(2)]
+
+    fig = go.Figure(go.Heatmap(
+        z=cm,
+        x=labels, y=labels,
+        text=text,
+        texttemplate="%{text}",
+        textfont={"size": 14, "family": "Inter"},
+        colorscale=[[0, "#EFF6FF"], [0.5, "#93C5FD"], [1, "#1D4ED8"]],
+        showscale=False,
+        hovertemplate="Actual: %{y}<br>Predicted: %{x}<br>Count: %{z}<extra></extra>",
+    ))
+    fig.update_layout(
+        height=320,
+        margin={"t": 16, "b": 48, "l": 60, "r": 16},
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"family": "Inter"},
+        xaxis={"title": "Predicted", "titlefont": {"size": 11, "color": "#64748B"}, "tickfont": {"size": 11}},
+        yaxis={"title": "Actual", "titlefont": {"size": 11, "color": "#64748B"}, "tickfont": {"size": 11}, "autorange": "reversed"},
+    )
+    return fig
+
 
 def _comparison_chart() -> go.Figure:
     """Interactive grouped bar chart comparing model metrics."""
@@ -25,8 +125,7 @@ def _comparison_chart() -> go.Figure:
     for metric, color in colors.items():
         fig.add_trace(go.Bar(
             name=metric,
-            y=df["Model"],
-            x=df[metric],
+            y=df["Model"], x=df[metric],
             orientation="h",
             marker={"color": color, "line": {"width": 0}},
             hovertemplate="<b>%{y}</b><br>" + metric + ": %{x:.3f}<extra></extra>",
@@ -47,10 +146,8 @@ def _comparison_chart() -> go.Figure:
         },
         xaxis={
             "range": [0.7, 1.0],
-            "showgrid": True,
-            "gridcolor": "#F1F5F9",
-            "zeroline": False,
-            "tickformat": ".2f",
+            "showgrid": True, "gridcolor": "#F1F5F9",
+            "zeroline": False, "tickformat": ".2f",
             "tickfont": {"color": "#94A3B8"},
         },
         yaxis={
@@ -77,9 +174,7 @@ def _feature_importance_chart(meta: dict) -> go.Figure | None:
     colors = ["#1D4ED8" if v >= top3_cutoff else "#93C5FD" for v in vals]
 
     fig = go.Figure(go.Bar(
-        x=vals,
-        y=names,
-        orientation="h",
+        x=vals, y=names, orientation="h",
         marker={"color": colors, "line": {"width": 0}},
         text=[f"{v:.3f}" for v in vals],
         textposition="outside",
@@ -92,16 +187,8 @@ def _feature_importance_chart(meta: dict) -> go.Figure | None:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font={"family": "Inter"},
-        xaxis={
-            "showgrid": True,
-            "gridcolor": "#F1F5F9",
-            "zeroline": False,
-            "showticklabels": False,
-        },
-        yaxis={
-            "showgrid": False,
-            "tickfont": {"size": 11, "color": "#475569"},
-        },
+        xaxis={"showgrid": True, "gridcolor": "#F1F5F9", "zeroline": False, "showticklabels": False},
+        yaxis={"showgrid": False, "tickfont": {"size": 11, "color": "#475569"}},
         bargap=0.3,
     )
     return fig
@@ -112,7 +199,7 @@ def render_model_info_tab() -> None:
 
     # ── KPI headline metrics ─────────────────────────────────────────────────
     st.markdown(
-        '<div class="section-header">Deployed Model &mdash; Random Forest</div>',
+'<div class="section-header">Deployed Model &mdash; Random Forest</div>',
         unsafe_allow_html=True,
     )
 
@@ -124,12 +211,39 @@ def render_model_info_tab() -> None:
 
     st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
 
+    # ── ROC Curve + Confusion Matrix row ──────────────────────────────────────
+    roc_col, cm_col = st.columns([1.2, 1], gap="large")
+
+    with roc_col:
+        st.markdown(
+'<div class="section-header">ROC Curves (All Models)</div>',
+            unsafe_allow_html=True,
+        )
+        roc_fig = _roc_chart(meta)
+        if roc_fig:
+            st.plotly_chart(roc_fig, use_container_width=True, config={"displayModeBar": False})
+        else:
+            st.caption("ROC curve data not available. Regenerate metadata.")
+
+    with cm_col:
+        st.markdown(
+'<div class="section-header">Confusion Matrix</div>',
+            unsafe_allow_html=True,
+        )
+        cm_fig = _confusion_matrix_chart(meta)
+        if cm_fig:
+            st.plotly_chart(cm_fig, use_container_width=True, config={"displayModeBar": False})
+        else:
+            st.caption("Confusion matrix not available. Regenerate metadata.")
+
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+    # ── Model comparison + Feature importances / Hyperparams ──────────────────
     left, right = st.columns([1.1, 1], gap="large")
 
     with left:
-        # Model comparison chart (interactive)
         st.markdown(
-            '<div class="section-header">Model Comparison</div>',
+'<div class="section-header">Model Comparison</div>',
             unsafe_allow_html=True,
         )
         st.plotly_chart(
@@ -152,7 +266,7 @@ def render_model_info_tab() -> None:
     with right:
         # Hyperparameters
         st.markdown(
-            '<div class="section-header">Hyperparameters</div>',
+'<div class="section-header">Hyperparameters</div>',
             unsafe_allow_html=True,
         )
         hp = meta.get("hyperparameters", {
@@ -170,15 +284,11 @@ def render_model_info_tab() -> None:
 
         # Feature importances (interactive)
         st.markdown(
-            '<div class="section-header">Feature Importances</div>',
+'<div class="section-header">Feature Importances</div>',
             unsafe_allow_html=True,
         )
         fi_chart = _feature_importance_chart(meta)
         if fi_chart is not None:
-            st.plotly_chart(
-                fi_chart,
-                use_container_width=True,
-                config={"displayModeBar": False},
-            )
+            st.plotly_chart(fi_chart, use_container_width=True, config={"displayModeBar": False})
         else:
             st.caption("Feature importances not available.")
