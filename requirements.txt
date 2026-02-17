@@ -7,3 +7,4 @@ seaborn>=0.13,<1
 scipy>=1.13,<2
 joblib>=1.4,<2
 pyyaml>=6.0,<7
+plotly>=5.20,<6

@@ -16,19 +16,25 @@ from components.styles import inject_css
 
 inject_css()
 
-# ── Header ────────────────────────────────────────────────────────────────────
-st.title("🏥 Liver Disease Risk Prediction")
+# ── Hero banner ────────────────────────────────────────────────────────────────
 st.markdown(
-    "A machine learning tool for assessing liver disease risk. "
-    "Enter patient information in the **Prediction** tab to generate a risk estimate."
+    """
+    <div class="hero">
+        <div class="hero-badge">🔬 Clinical Decision Support · ML-Powered</div>
+        <div class="hero-title">Liver Disease Risk Assessment</div>
+        <div class="hero-subtitle">
+            Random Forest · F1 0.90 · AUC 0.95 · 1,700-record dataset · For educational use only
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
-st.divider()
 
-# ── Tabs ──────────────────────────────────────────────────────────────────────
+# ── Tabs ───────────────────────────────────────────────────────────────────────
 tab_predict, tab_info, tab_about = st.tabs([
-    "🩺 Prediction",
-    "📊 Model Info",
-    "ℹ️ About",
+    "🩺  Prediction",
+    "📊  Model Performance",
+    "ℹ️  About",
 ])
 
 with tab_predict:
