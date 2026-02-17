@@ -20,10 +20,31 @@ inject_css()
 st.markdown(
     """
     <div class="hero">
-        <div class="hero-badge">🔬 Clinical Decision Support · ML-Powered</div>
+        <div class="hero-badge">Clinical Decision Support &middot; ML-Powered</div>
         <div class="hero-title">Liver Disease Risk Assessment</div>
         <div class="hero-subtitle">
-            Random Forest · F1 0.90 · AUC 0.95 · 1,700-record dataset · For educational use only
+            Advanced prediction powered by ensemble machine learning
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-value">0.90</div>
+                <div class="hero-stat-label">F1 Score</div>
+            </div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">0.95</div>
+                <div class="hero-stat-label">AUC-ROC</div>
+            </div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">1,700</div>
+                <div class="hero-stat-label">Records</div>
+            </div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">RF</div>
+                <div class="hero-stat-label">Model</div>
+            </div>
         </div>
     </div>
     """,

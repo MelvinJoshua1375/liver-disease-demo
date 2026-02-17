@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from app.components.utils import FEATURE_CONFIG, FEATURE_ORDER, load_metadata, load_model
 
