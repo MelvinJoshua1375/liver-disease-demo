@@ -222,17 +222,21 @@ def render_prediction_tab() -> None:
         inputs: dict = {}
         for feat, cfg in FEATURE_CONFIG["numeric"].items():
             is_float = cfg["type"] is float
+            slider_key = f"slider_{feat}"
             col_slider, col_val = st.columns([3, 1])
             with col_slider:
-                slider_val = st.slider(
-                    cfg["label"],
-                    min_value=float(cfg["min"]),
-                    max_value=float(cfg["max"]),
-                    value=float(cfg["default"]),
-                    step=float(cfg["step"]),
-                    help=cfg.get("help", ""),
-                    key=f"slider_{feat}",
-                )
+                # Only pass value if key is NOT already in session_state (avoids warning)
+                slider_kwargs = {
+                    "label": cfg["label"],
+                    "min_value": float(cfg["min"]),
+                    "max_value": float(cfg["max"]),
+                    "step": float(cfg["step"]),
+                    "help": cfg.get("help", ""),
+                    "key": slider_key,
+                }
+                if slider_key not in st.session_state:
+                    slider_kwargs["value"] = float(cfg["default"])
+                slider_val = st.slider(**slider_kwargs)
             with col_val:
                 num_val = st.number_input(
                     "Value",
