@@ -56,24 +56,34 @@ def plot_percentage_stacked_chart(
     title: str = "",
     xlabel: str = "",
     ax: plt.Axes | None = None,
+    angle: int = 0,
 ) -> plt.Axes:
-    """100% stacked bar chart from a crosstabulate output DataFrame."""
+    """100% stacked bar chart with percentage labels on each segment."""
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 5))
 
     bins_str = ct["bin"].astype(str).tolist()
-    pos = ct.get("positive_pct", 0).tolist()
-    neg = ct.get("negative_pct", 0).tolist()
+    neg_pct = ct.get("negative_pct", pd.Series([0] * len(ct))).tolist()
+    pos_pct = ct.get("positive_pct", pd.Series([0] * len(ct))).tolist()
 
-    ax.bar(bins_str, pos, label="Positive", color=PALETTE["positive"], width=0.6)
-    ax.bar(bins_str, neg, bottom=pos, label="Negative", color=PALETTE["negative"], width=0.6)
+    ax.bar(bins_str, neg_pct, label="Negative", color=PALETTE["negative"], width=0.6)
+    ax.bar(bins_str, pos_pct, bottom=neg_pct, label="Positive", color=PALETTE["positive"], width=0.6)
 
-    ax.set_ylim(0, 100)
+    # Add percentage labels on each segment
+    for i, (neg, pos) in enumerate(zip(neg_pct, pos_pct)):
+        if neg > 0:
+            ax.text(i, neg / 2, f"{neg:.1f}%", ha="center", va="center",
+                    fontsize=9, color="white", fontweight="bold")
+        if pos > 0:
+            ax.text(i, neg + pos / 2, f"{pos:.1f}%", ha="center", va="center",
+                    fontsize=9, color="white", fontweight="bold")
+
+    ax.set_ylim(0, 105)
     ax.set_ylabel("Percentage (%)", fontsize=10)
     ax.set_xlabel(xlabel or "Bin", fontsize=10)
     ax.set_title(title, fontsize=11, fontweight="bold", pad=8)
-    ax.tick_params(axis="x", rotation=40)
-    ax.legend(loc="upper right", fontsize=9)
+    ax.tick_params(axis="x", rotation=angle)
+    ax.legend(title="Diagnosis", bbox_to_anchor=(1, 1), fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="y", alpha=0.2, linestyle="--")
 
