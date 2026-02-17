@@ -174,10 +174,13 @@ def _feature_importance_chart(model) -> go.Figure | None:
 
 
 def _apply_preset(preset_name: str) -> None:
-    """Apply a patient preset to session state."""
+    """Apply a patient preset — sets slider + selectbox keys directly."""
     vals = PRESETS[preset_name]
     for feat, val in vals.items():
-        st.session_state[f"input_{feat}"] = val
+        if feat in FEATURE_CONFIG["numeric"]:
+            st.session_state[f"slider_{feat}"] = float(val)
+        elif feat in FEATURE_CONFIG["categorical"]:
+            st.session_state[f"select_{feat}"] = val
 
 
 def render_prediction_tab() -> None:
@@ -219,14 +222,13 @@ def render_prediction_tab() -> None:
         inputs: dict = {}
         for feat, cfg in FEATURE_CONFIG["numeric"].items():
             is_float = cfg["type"] is float
-            default = st.session_state.get(f"input_{feat}", cfg["default"])
             col_slider, col_val = st.columns([3, 1])
             with col_slider:
                 slider_val = st.slider(
                     cfg["label"],
                     min_value=float(cfg["min"]),
                     max_value=float(cfg["max"]),
-                    value=float(default),
+                    value=float(cfg["default"]),
                     step=float(cfg["step"]),
                     help=cfg.get("help", ""),
                     key=f"slider_{feat}",
@@ -252,13 +254,11 @@ def render_prediction_tab() -> None:
         cat_feats = list(FEATURE_CONFIG["categorical"].items())
         for i, (feat, cfg) in enumerate(cat_feats):
             col = cat_col1 if i % 2 == 0 else cat_col2
-            default_cat = st.session_state.get(f"input_{feat}", cfg["default"])
-            idx = cfg["options"].index(default_cat) if default_cat in cfg["options"] else 0
             with col:
                 inputs[feat] = st.selectbox(
                     feat,
                     options=cfg["options"],
-                    index=idx,
+                    index=cfg["options"].index(cfg["default"]),
                     key=f"select_{feat}",
                 )
 
