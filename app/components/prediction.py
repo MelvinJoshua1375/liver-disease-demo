@@ -76,14 +76,15 @@ def render_prediction_tab() -> None:
         for idx, (feat, cfg) in enumerate(num_feats):
             col = num_col1 if idx % 2 == 0 else num_col2
             with col:
+                is_float = cfg["type"] is float
                 inputs[feat] = st.number_input(
                     cfg["label"],
-                    min_value=float(cfg["min"]),
-                    max_value=float(cfg["max"]),
-                    value=float(cfg["default"]),
-                    step=float(cfg["step"]),
+                    min_value=float(cfg["min"]) if is_float else int(cfg["min"]),
+                    max_value=float(cfg["max"]) if is_float else int(cfg["max"]),
+                    value=float(cfg["default"]) if is_float else int(cfg["default"]),
+                    step=float(cfg["step"]) if is_float else int(cfg["step"]),
                     help=cfg.get("help", ""),
-                    format="%.1f" if cfg["type"] is float else "%d",
+                    format="%.1f" if is_float else "%d",
                 )
 
         st.markdown('<div class="section-header">Patient History</div>', unsafe_allow_html=True)
