@@ -156,7 +156,7 @@ class TestWoEReplacement:
         df = simple_df()
         mappings = compute_woe_mappings(df, ["feature"], "target", positive_label="Pos", negative_label="Neg")
         assert "feature" in mappings
-        assert "A" in mappings["feature"]
+        assert "A" in mappings["feature"]["woe"]
 
     def test_apply_preserves_row_count(self):
         df = simple_df()
@@ -190,7 +190,7 @@ class TestWoEReplacement:
         mappings = compute_woe_mappings(df_train, ["feature"], "target", positive_label="Pos", negative_label="Neg")
         result_test = apply_woe_mappings(df_test, mappings)
         # Test uses train mappings, not recomputed
-        assert pytest.approx(result_test["feature"].iloc[0]) == mappings["feature"]["A"]
+        assert pytest.approx(result_test["feature"].iloc[0]) == mappings["feature"]["woe"]["A"]
 
 
 # ─── TestPreprocessorConstruction ─────────────────────────────────────────────

@@ -151,6 +151,10 @@ def compute_woe_mappings(
 ) -> dict[str, dict]:
     """Learn WoE mappings from training data (fit step).
 
+    For numeric features, stores both the WoE mapping and the bin edges
+    derived from training data, so the same edges can be applied to test data
+    via ``apply_woe_mappings``.
+
     Parameters
     ----------
     train_df : pd.DataFrame
@@ -164,34 +168,42 @@ def compute_woe_mappings(
     Returns
     -------
     dict
-        {feature_name: {bin_label: woe_value}}
+        {feature_name: {"woe": {bin_label: woe_value}, "bin_edges": list | None}}
     """
     mappings = {}
     for feat in features:
+        is_numeric = pd.api.types.is_numeric_dtype(train_df[feat])
         mapping, _ = calculate_woe(
             train_df, feat, target, positive_label, negative_label, bins
         )
-        mappings[feat] = mapping
+        bin_edges = None
+        if is_numeric:
+            # Store the bin edges from training data for consistent binning
+            _, bin_edges = pd.qcut(
+                train_df[feat], q=bins, duplicates="drop", retbins=True
+            )
+            bin_edges = bin_edges.tolist()
+        mappings[feat] = {"woe": mapping, "bin_edges": bin_edges}
     return mappings
 
 
 def apply_woe_mappings(
     df: pd.DataFrame,
     mappings: dict[str, dict],
-    bins: int = 10,
     fill_value: float = 0.0,
 ) -> pd.DataFrame:
     """Apply pre-learned WoE mappings to a DataFrame (transform step).
 
-    Unseen categories (e.g., in the test set) are filled with fill_value.
+    For numeric features, uses the bin edges stored during
+    ``compute_woe_mappings`` (via ``pd.cut``) so that train and test data
+    are binned identically.  Unseen categories or out-of-range values are
+    filled with *fill_value*.
 
     Parameters
     ----------
     df : pd.DataFrame
     mappings : dict
         Output of compute_woe_mappings.
-    bins : int
-        Must match bins used when computing mappings.
     fill_value : float
         WoE for unseen categories. Default 0.0 (neutral log-odds).
 
@@ -201,12 +213,25 @@ def apply_woe_mappings(
         Copy of df with WoE values replacing original feature columns.
     """
     result = df.copy()
-    for feat, mapping in mappings.items():
+    for feat, info in mappings.items():
         if feat not in result.columns:
             continue
-        if pd.api.types.is_numeric_dtype(result[feat]):
-            bins_col = pd.qcut(result[feat], q=bins, duplicates="drop")
-            result[feat] = bins_col.map(mapping).fillna(fill_value).astype(float)
+        woe_map = info["woe"]
+        bin_edges = info["bin_edges"]
+
+        if bin_edges is not None:
+            # Numeric: use training bin edges via pd.cut for consistency
+            bins_col = pd.cut(result[feat], bins=bin_edges, include_lowest=True)
+            # Map intervals to WoE values; convert to float directly
+            # (unmapped intervals become NaN, then fill)
+            mapped = bins_col.map(woe_map)
+            result[feat] = pd.to_numeric(mapped, errors="coerce").fillna(fill_value)
         else:
-            result[feat] = result[feat].map(mapping).fillna(fill_value).astype(float)
+            # Categorical: direct map
+            result[feat] = (
+                result[feat]
+                .map(woe_map)
+                .fillna(fill_value)
+                .astype(float)
+            )
     return result
