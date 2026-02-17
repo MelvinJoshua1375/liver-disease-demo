@@ -1,20 +1,72 @@
-# Liver Disease Prediction Project
+# Liver Disease Prediction
 
-This repository contains:
-
-- `Liver_Disease_EDA.ipynb` — Full code of the EDA in Python (run on Google Colab)
-- `Statisical Exploration on Liver Disease Data.pptx` — Presentation summarizing the Exploratory Data Analysis
-- `Liver_Disease_Modelling.ipynb` — Full code of the Modelling in Python (run on Google Colab)
-- `Liver Disease Prediction - Melvin Joshua.pptx` — Presentation summarizing the Modelling
-
-## Summary
-This project focuses on predicting liver disease using a dataset of 1700 records. Through exploratory data analysis (EDA), key risk factors such as BMI, alcohol consumption, and liver function tests were identified using Weight of Evidence. Various machine learning models, including Logistic Regression, Decision Tree, Random Forest, Support Vector Classifier, and Naive Bayes, were trained and evaluated using ROC curves. Model calibration was performed on the Decision Tree, and hyperparameters were fine-tuned for both Decision Tree and Random Forest to address overfitting. Among the models tested, Random Forest achieved the highest accuracy, offering valuable insights for early detection and potential prevention of liver disease. The tool used for modelling is the programming language, Python.
-## Data
-Synthetic dataset with 1700 records and 11 features.
-Source: https://www.kaggle.com/datasets/rabieelkharoua/predict-liver-disease-1700-records-dataset/data
+Binary classification pipeline predicting liver disease from patient clinical and demographic data. Portfolio-quality ML project with proper architecture, TDD, Optuna hyperparameter tuning, WoE/IV analysis, and Streamlit deployment with CI/CD.
 
 ## Results
-- Random Forest achieved the best performance.
-- Deployment was done using Streamlit.
 
----
+| Model | F1 (Weighted) | ROC AUC |
+|-------|:---:|:---:|
+| Logistic Regression | 0.82 | 0.90 |
+| Decision Tree (calibrated) | 0.84 | 0.90 |
+| SVM | 0.85 | 0.93 |
+| Naive Bayes | 0.78 | 0.87 |
+| **Random Forest ★** | **0.90** | **0.95** |
+| DT + LR Hybrid | 0.90 | 0.96 |
+
+**Best deployed model**: Random Forest (`max_depth=10, n_estimators=100, min_samples_split=10, min_samples_leaf=4`)
+
+## Setup
+
+```bash
+git clone https://github.com/MelvinJoshua1375/liver-disease-demo.git
+cd liver-disease-demo
+pip install -e ".[dev]"
+python scripts/download_data.py   # or place CSV manually at data/liver_disease_data.csv
+```
+
+## Common Commands
+
+```bash
+make test            # Run pytest (76 tests, 80% coverage)
+make lint            # Ruff linter
+make train           # Train model -> models/liver_disease_model.pkl
+make generate-ppts   # Auto-generate both PPTs via python-pptx
+make run             # Launch Streamlit app locally (http://localhost:8501)
+```
+
+## Project Structure
+
+```
+src/
+  data/          # Loader (integer → string label mapping), validation, splitter
+  features/      # Preprocessing (OrdinalEncoder + OneHotEncoder), WoE/IV, WoE visualization
+  models/        # Model registry, Optuna tuning, DTSegmentedLR hybrid, persistence
+  evaluation/    # Metrics, calibration curves, stratified CV with overfitting detection
+  visualization/ # EDA plots (boxplots, stacked bars, correlation heatmap)
+app/             # Streamlit: Prediction tab, Model Info tab, About tab
+notebooks/       # Lean narrative notebooks that import from src/
+scripts/         # train_model.py, generate_metadata.py, generate_ppts.py
+tests/           # 76 pytest tests (TDD-first)
+models/          # liver_disease_model.pkl + model_metadata.json
+config/          # settings.yaml (all paths, feature lists, model params)
+```
+
+## Architecture Notes
+
+- **Single preprocessor**: `src/features/preprocessing.py:create_preprocessor()` — OrdinalEncoder for `GeneticRisk` (preserves Low < Medium < High ordinal signal), OneHotEncoder with `drop="if_binary"` for nominal binary features.
+- **No data leakage**: WoE mappings use `compute_woe_mappings(train)` → `apply_woe_mappings(test, mappings)`. `DTSegmentedLR` is a proper sklearn `BaseEstimator` that fits only on training folds during cross-validation.
+- **Overfitting detection**: Flags when train-test gap > 2× test score std dev across CV folds (replaces the original arbitrary 0.1 threshold).
+- **DT+LR Hybrid**: `src/models/dt_lr_hybrid.py:DTSegmentedLR` — shallow Decision Tree extracts leaf segments, one-hot encodes them, concatenates with original features, then trains Logistic Regression on the augmented set. Based on the Facebook GBDT+LR technique.
+- **WoE smoothing fix**: Laplace smoothing applied only when at least one bin has a zero count (original implementation always added smoothing, biasing all WoE values).
+
+## Dataset
+
+Synthetic dataset from [Kaggle](https://www.kaggle.com/datasets/rabieelkharoua/predict-liver-disease-1700-records-dataset): 1,700 records, 10 features (5 numeric, 5 categorical), binary target (55% Positive / 45% Negative). Raw CSV uses integer codes decoded to string labels by the data loader.
+
+## CI/CD
+
+GitHub Actions on every push: **Lint** → **Tests** (80% coverage) → **Notebook validation** → **Artifact verification** → Streamlit Cloud auto-deploy.
+
+## Author
+
+Melvin Joshua — 2026

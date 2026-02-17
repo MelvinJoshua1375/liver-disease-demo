@@ -1,0 +1,32 @@
+name: Verify Deploy Artifacts
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "app/**"
+      - "models/**"
+      - "requirements.txt"
+      - "pyproject.toml"
+
+jobs:
+  verify-artifacts:
+    name: Verify required deployment files exist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check app entry point
+        run: |
+          test -f app/app.py || (echo "ERROR: app/app.py missing" && exit 1)
+          echo "app/app.py: OK"
+      - name: Check model artifact
+        run: |
+          test -f models/liver_disease_model.pkl || \
+            (echo "ERROR: models/liver_disease_model.pkl missing. Run 'python scripts/train_model.py'" && exit 1)
+          echo "models/liver_disease_model.pkl: OK"
+      - name: Check Streamlit config
+        run: |
+          test -f .streamlit/config.toml || (echo "ERROR: .streamlit/config.toml missing" && exit 1)
+          echo ".streamlit/config.toml: OK"
+      - name: All artifacts verified
+        run: echo "All deployment artifacts present. Streamlit Cloud will auto-deploy."

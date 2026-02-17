@@ -1,0 +1,86 @@
+{
+  "model_name": "Random Forest",
+  "version": "1.0.0",
+  "training_date": "2026-02-17",
+  "dataset_size": 1700,
+  "accuracy": 0.8971,
+  "f1_score": 0.8973,
+  "roc_auc": 0.9532,
+  "hyperparameters": {
+    "n_estimators": 100,
+    "max_depth": 10,
+    "min_samples_split": 10,
+    "min_samples_leaf": 4
+  },
+  "feature_importances": {
+    "Age": 0.09714055381885921,
+    "BMI": 0.10292468165885577,
+    "AlcoholConsumption": 0.27403606146462917,
+    "PhysicalActivity": 0.08148215804714071,
+    "LiverFunctionTest": 0.2593319961821188,
+    "GeneticRisk": 0.04347088386424861,
+    "Gender_Male": 0.05418371575150864,
+    "Smoking_Yes": 0.04858801586369062,
+    "Diabetes_Yes": 0.012942062685647121,
+    "Hypertension_Yes": 0.025899870663301395
+  },
+  "classification_report": {
+    "Negative": {
+      "precision": 0.8597560975609756,
+      "recall": 0.9215686274509803,
+      "f1-score": 0.889589905362776,
+      "support": 153.0
+    },
+    "Positive": {
+      "precision": 0.9318181818181818,
+      "recall": 0.8770053475935828,
+      "f1-score": 0.9035812672176309,
+      "support": 187.0
+    },
+    "accuracy": 0.8970588235294118,
+    "macro avg": {
+      "precision": 0.8957871396895787,
+      "recall": 0.8992869875222815,
+      "f1-score": 0.8965855862902035,
+      "support": 340.0
+    },
+    "weighted avg": {
+      "precision": 0.8993902439024389,
+      "recall": 0.8970588235294118,
+      "f1-score": 0.8972851543829463,
+      "support": 340.0
+    }
+  },
+  "model_comparison": [
+    {
+      "model": "Logistic Regression",
+      "accuracy": 0.8206,
+      "f1_weighted": 0.8206,
+      "roc_auc": 0.8961
+    },
+    {
+      "model": "Decision Tree",
+      "accuracy": 0.8382,
+      "f1_weighted": 0.8386,
+      "roc_auc": 0.9002
+    },
+    {
+      "model": "Svc",
+      "accuracy": 0.85,
+      "f1_weighted": 0.8502,
+      "roc_auc": 0.9263
+    },
+    {
+      "model": "Naive Bayes",
+      "accuracy": 0.7794,
+      "f1_weighted": 0.7798,
+      "roc_auc": 0.8652
+    },
+    {
+      "model": "Random Forest",
+      "accuracy": 0.8971,
+      "f1_weighted": 0.8973,
+      "roc_auc": 0.9532
+    }
+  ]
+}
