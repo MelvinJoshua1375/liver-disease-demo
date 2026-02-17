@@ -6,7 +6,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import streamlit as st
 
-from app.components.utils import load_metadata
+from components.utils import load_metadata
 
 _MODEL_COMPARISON = [
     {"Model": "Logistic Regression", "F1 (Weighted)": 0.81, "ROC AUC": 0.88},

@@ -9,10 +9,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-from app.components.about import render_about_tab
-from app.components.model_info import render_model_info_tab
-from app.components.prediction import render_prediction_tab
-from app.components.styles import inject_css
+from components.about import render_about_tab
+from components.model_info import render_model_info_tab
+from components.prediction import render_prediction_tab
+from components.styles import inject_css
 
 inject_css()
 

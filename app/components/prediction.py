@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from app.components.utils import FEATURE_CONFIG, FEATURE_ORDER, load_model
+from components.utils import FEATURE_CONFIG, FEATURE_ORDER, load_model
 
 
 def _risk_level(prob: float) -> tuple[str, str, str]:
