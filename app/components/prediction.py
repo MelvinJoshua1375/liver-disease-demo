@@ -83,7 +83,7 @@ def render_prediction_tab() -> None:
                     value=float(cfg["default"]),
                     step=float(cfg["step"]),
                     help=cfg.get("help", ""),
-                    format="%.1f" if cfg["type"] == float else "%d",
+                    format="%.1f" if cfg["type"] is float else "%d",
                 )
 
         st.markdown('<div class="section-header">Patient History</div>', unsafe_allow_html=True)

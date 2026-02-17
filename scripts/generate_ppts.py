@@ -16,6 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,15 +28,12 @@ from pptx.util import Inches, Pt
 
 from src.config import load_settings
 from src.data.loader import load_raw_data
-from src.data.splitter import extract_X_y, stratified_split
 from src.features.schema import (
     CATEGORICAL_FEATURES,
-    NOMINAL_FEATURES,
     NUMERIC_FEATURES,
     TARGET,
 )
 from src.features.woe import iv_summary_table
-from src.models.persistence import load_model
 from src.visualization.eda_plots import (
     crosstabulate,
     plot_boxplot,
@@ -81,7 +79,6 @@ def _blank_slide(prs: Presentation):
 
 def _add_header_bar(slide, title: str, subtitle: str = "") -> None:
     """Dark navy header bar spanning full width."""
-    from pptx.util import Emu
     bar = slide.shapes.add_shape(
         1,  # MSO_SHAPE_TYPE.RECTANGLE
         Inches(0), Inches(0), Inches(13.33), Inches(1.25),
@@ -101,7 +98,6 @@ def _add_header_bar(slide, title: str, subtitle: str = "") -> None:
     run.font.color.rgb = WHITE
 
     if subtitle:
-        from pptx.util import Pt as Pt2
         p2 = tf.add_paragraph()
         p2.alignment = PP_ALIGN.LEFT
         r2 = p2.add_run()
@@ -181,7 +177,6 @@ def _add_table_slide(prs, title: str, headers: list[str],
 
     n_cols = len(headers)
     n_rows = len(rows) + 1  # +1 for header row
-    col_width = Inches(12.33 / n_cols)
     tbl = slide.shapes.add_table(
         n_rows, n_cols, Inches(0.5), Inches(1.5), Inches(12.33), Inches(min(5.5, n_rows * 0.45))
     ).table
@@ -248,7 +243,7 @@ def build_eda_ppt(df: pd.DataFrame) -> Presentation:
     # Slide 4: Numeric Features vs Diagnosis (boxplots grid)
     n = len(NUMERIC_FEATURES)
     fig, axes = plt.subplots(1, n, figsize=(14, 4))
-    for ax, feat in zip(axes, NUMERIC_FEATURES):
+    for ax, feat in zip(axes, NUMERIC_FEATURES, strict=False):
         plot_boxplot(df, feat, TARGET, ax=ax)
     fig.tight_layout()
     _add_image_slide(prs, "Numeric Features vs Diagnosis",

@@ -166,12 +166,14 @@ def validate_woe_monotonicity(
     violations = []
     if not (all_up or all_down):
         for i, diff in enumerate(diffs):
-            if expected_direction == "increasing" and diff < 0 or expected_direction == "decreasing" and diff > 0:
+            if expected_direction == "increasing" and diff < 0 or expected_direction == "decreasing" and diff > 0 or (
+                expected_direction is None
+                and abs(diff) > 1e-6
+                and i > 0
+                and np.sign(diffs[i]) != np.sign(diffs[i - 1])
+                and diffs[i - 1] != 0
+            ):
                 violations.append((bin_labels[i], bin_labels[i + 1], woe_vals[i], woe_vals[i + 1]))
-            elif expected_direction is None and abs(diff) > 1e-6:
-                # Flag direction reversals
-                if i > 0 and np.sign(diffs[i]) != np.sign(diffs[i - 1]) and diffs[i - 1] != 0:
-                    violations.append((bin_labels[i], bin_labels[i + 1], woe_vals[i], woe_vals[i + 1]))
 
     return {
         "is_monotonic": all_up or all_down,

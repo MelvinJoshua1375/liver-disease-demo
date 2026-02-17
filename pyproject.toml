@@ -57,7 +57,13 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # line too long (already handled by line-length setting)
+    "E402",   # module import not at top (scripts need sys.path.insert first)
+    "N806",   # X, X_train etc. — standard ML naming convention
+    "N803",   # X, X_train etc. in args — standard ML naming convention
+    "N802",   # extract_X_y, _validate_X — standard ML naming convention
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]
