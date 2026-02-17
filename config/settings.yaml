@@ -1,0 +1,39 @@
+data:
+  raw_path: "data/liver_disease_data.csv"
+  processed_dir: "data/processed"
+  test_size: 0.2
+  random_state: 42
+  target_column: "Diagnosis"
+  positive_label: "Positive"
+  negative_label: "Negative"
+
+features:
+  numeric:
+    - Age
+    - BMI
+    - AlcoholConsumption
+    - PhysicalActivity
+    - LiverFunctionTest
+  categorical:
+    - Gender
+    - Smoking
+    - GeneticRisk
+    - Diabetes
+    - Hypertension
+  ordinal:
+    GeneticRisk:
+      - Low
+      - Medium
+      - High
+  nominal:
+    - Gender
+    - Smoking
+    - Diabetes
+    - Hypertension
+
+model:
+  artifacts_dir: "models"
+  default_model: "random_forest"
+  random_state: 42
+  optuna_n_trials: 100
+  cv_folds: 5
