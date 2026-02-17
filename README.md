@@ -1,6 +1,11 @@
 # Liver Disease Prediction
 
+[![CI](https://github.com/MelvinJoshua1375/liver-disease-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/MelvinJoshua1375/liver-disease-demo/actions/workflows/ci.yml)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://liver-disease-project.streamlit.app/)
+
 Binary classification pipeline predicting liver disease from patient clinical and demographic data. Portfolio-quality ML project with proper architecture, TDD, Optuna hyperparameter tuning, WoE/IV analysis, and Streamlit deployment with CI/CD.
+
+**Live demo**: https://liver-disease-project.streamlit.app/
 
 ## Results
 
