@@ -1,12 +1,22 @@
 """Prediction tab: patient presets, slider inputs, fragment-based results."""
 
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from streamlit_lottie import st_lottie
 
+# Ensure src/ is importable from the app
+_project_root = Path(__file__).resolve().parent.parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
 from components.utils import FEATURE_CONFIG, FEATURE_ORDER, load_model
+
+from src.evaluation.shap_explain import compute_single_shap
 
 # ── Patient presets ──────────────────────────────────────────────────────────
 PRESETS: dict[str, dict] = {
@@ -128,6 +138,61 @@ def _gauge_chart(prob: float) -> go.Figure:
         margin={"t": 48, "b": 0, "l": 24, "r": 24},
         paper_bgcolor="rgba(0,0,0,0)",
         font={"family": "Inter"},
+    )
+    return fig
+
+
+def _shap_waterfall_chart(shap_values, feature_names, base_value) -> go.Figure:
+    """Plotly waterfall chart showing SHAP contributions for a single prediction."""
+    vals = shap_values
+    names = list(feature_names)
+
+    # Sort by absolute value, keep top 8
+    idx = np.argsort(np.abs(vals))
+    top_idx = idx[-8:]  # top 8 by magnitude
+
+    top_names = [names[i] for i in top_idx]
+    top_vals = [vals[i] for i in top_idx]
+
+    # Sort top features by value for better visual flow
+    sort_order = np.argsort(top_vals)
+    top_names = [top_names[i] for i in sort_order]
+    top_vals = [top_vals[i] for i in sort_order]
+
+    colors = ["#DC2626" if v > 0 else "#2563EB" for v in top_vals]
+
+    fig = go.Figure(go.Bar(
+        x=top_vals,
+        y=top_names,
+        orientation="h",
+        marker={"color": colors, "line": {"width": 0}},
+        text=[f"{v:+.3f}" for v in top_vals],
+        textposition="outside",
+        textfont={"size": 10, "color": "#64748B", "family": "Inter"},
+        hovertemplate="<b>%{y}</b><br>SHAP: %{x:+.4f}<extra></extra>",
+    ))
+
+    fig.update_layout(
+        height=280,
+        margin={"t": 24, "b": 32, "l": 8, "r": 56},
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"family": "Inter"},
+        xaxis={
+            "showgrid": True, "gridcolor": "#F1F5F9", "zeroline": True,
+            "zerolinecolor": "#CBD5E1", "zerolinewidth": 1,
+            "title": "SHAP value (impact on positive class)",
+            "titlefont": {"size": 10, "color": "#94A3B8"},
+            "tickfont": {"size": 9, "color": "#94A3B8"},
+        },
+        yaxis={"showgrid": False, "tickfont": {"size": 11, "color": "#475569"}},
+        bargap=0.3,
+        annotations=[{
+            "x": 0, "y": -0.18, "xref": "paper", "yref": "paper",
+            "text": f"Base value: {base_value:.3f}",
+            "showarrow": False,
+            "font": {"size": 9, "color": "#94A3B8"},
+        }],
     )
     return fig
 
@@ -347,6 +412,25 @@ def _render_results(model, inputs: dict, predict_clicked: bool) -> None:
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
+    display_inputs = st.session_state.get("last_inputs", inputs)
+
+    # SHAP explanation (per-prediction)
+    row = {feat: [display_inputs[feat]] for feat in FEATURE_ORDER}
+    input_df = pd.DataFrame(row)
+    try:
+        shap_exp = compute_single_shap(model, input_df)
+        st.markdown(
+'<div class="section-header">Why This Prediction? (SHAP)</div>',
+            unsafe_allow_html=True,
+        )
+        shap_fig = _shap_waterfall_chart(
+            shap_exp.values[0], shap_exp.feature_names, shap_exp.base_values[0]
+        )
+        st.plotly_chart(shap_fig, use_container_width=True, config={"displayModeBar": False})
+        st.caption("Red = pushes toward positive (disease) | Blue = pushes toward negative (healthy)")
+    except Exception:
+        pass  # Graceful fallback if SHAP fails
+
     # Feature importance (interactive Plotly)
     fig = _feature_importance_chart(model)
     if fig is not None:
@@ -357,7 +441,6 @@ def _render_results(model, inputs: dict, predict_clicked: bool) -> None:
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     # Input summary
-    display_inputs = st.session_state.get("last_inputs", inputs)
     with st.expander("📋  View Input Summary", expanded=False):
         summary_df = pd.DataFrame({
             "Feature": list(display_inputs.keys()),

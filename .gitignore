@@ -36,3 +36,9 @@ desktop.ini
 # Environment variables
 .env
 .env.local
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.playwright-mcp/
+.claude/

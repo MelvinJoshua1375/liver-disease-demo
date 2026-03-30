@@ -28,7 +28,9 @@ from pptx.util import Inches, Pt
 
 from src.config import load_settings
 from src.data.loader import load_raw_data
+from src.evaluation.shap_explain import aggregate_shap_importances, compute_shap_values
 from src.features.schema import (
+    ALL_FEATURES,
     CATEGORICAL_FEATURES,
     NUMERIC_FEATURES,
     TARGET,
@@ -297,7 +299,7 @@ def build_eda_ppt(df: pd.DataFrame) -> Presentation:
 
 # ── Modelling PPT ────────────────────────────────────────────────────────────
 
-def build_modelling_ppt(df: pd.DataFrame, metadata: dict) -> Presentation:
+def build_modelling_ppt(df: pd.DataFrame, metadata: dict, model=None) -> Presentation:
     prs = _new_prs()
 
     # Slide 1: Title
@@ -341,7 +343,26 @@ def build_modelling_ppt(df: pd.DataFrame, metadata: dict) -> Presentation:
                          _fig_to_stream(fig),
                          "AlcoholConsumption and LiverFunctionTest are the most predictive features")
 
-    # Slide 5: Classification Report
+    # Slide 5: SHAP Global Importance
+    if model is not None:
+        try:
+            X_sample = df[ALL_FEATURES].sample(n=min(300, len(df)), random_state=42)
+            shap_exp = compute_shap_values(model, X_sample)
+            shap_df = aggregate_shap_importances(shap_exp)
+            top = shap_df.head(10).sort_values("mean_abs_shap", ascending=True)
+            fig, ax = plt.subplots(figsize=(9, 5))
+            ax.barh(top["feature"], top["mean_abs_shap"], color="#7C3AED")
+            ax.set_xlabel("Mean |SHAP value|", fontsize=10)
+            ax.set_title("SHAP Global Feature Importance", fontsize=12, fontweight="bold")
+            ax.spines[["top", "right"]].set_visible(False)
+            fig.tight_layout()
+            _add_image_slide(prs, "SHAP — Global Feature Importance",
+                             _fig_to_stream(fig),
+                             "Mean |SHAP| across 300 samples — game-theory-based feature attribution")
+        except Exception as e:
+            print(f"  SHAP slide skipped: {e}")
+
+    # Slide 6: Classification Report
     cr = metadata.get("classification_report", {})
     if cr:
         headers = ["Class", "Precision", "Recall", "F1-Score", "Support"]
@@ -427,8 +448,18 @@ def main():
     eda_prs.save(str(eda_path))
     print(f"  Saved: {eda_path}")
 
+    print("Loading trained model...")
+    model_path = ROOT / "models" / "liver_disease_model.pkl"
+    model = None
+    if model_path.exists():
+        import joblib
+        model = joblib.load(model_path)
+        print("  Model loaded.")
+    else:
+        print("  Model not found — SHAP slide will be skipped.")
+
     print("Building Modelling presentation...")
-    mod_prs = build_modelling_ppt(df, metadata)
+    mod_prs = build_modelling_ppt(df, metadata, model=model)
     mod_path = PPTS_DIR / "Modelling_Liver_Disease.pptx"
     mod_prs.save(str(mod_path))
     print(f"  Saved: {mod_path}")

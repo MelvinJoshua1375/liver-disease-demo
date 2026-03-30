@@ -9,3 +9,4 @@ joblib>=1.4,<2
 pyyaml>=6.0,<7
 plotly>=5.20,<6
 streamlit-lottie>=0.0.5
+shap>=0.45,<1

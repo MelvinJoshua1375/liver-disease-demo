@@ -1,11 +1,17 @@
-"""Model Performance tab: KPI metrics, ROC curves, confusion matrix, comparisons."""
+"""Model Performance tab: KPI metrics, ROC curves, confusion matrix, comparisons, SHAP."""
+
+import sys
+from pathlib import Path
 
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import streamlit as st
 
-from components.utils import load_metadata
+_project_root = Path(__file__).resolve().parent.parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
+from components.utils import load_metadata, load_model
 
 _MODEL_COMPARISON = [
     {"Model": "Logistic Regression", "Accuracy": 0.821, "F1 (Weighted)": 0.821, "ROC AUC": 0.896},
@@ -194,6 +200,57 @@ def _feature_importance_chart(meta: dict) -> go.Figure | None:
     return fig
 
 
+@st.cache_data(show_spinner="Computing SHAP values...")
+def _compute_global_shap():
+    """Compute global SHAP importances using a sample of training data."""
+    try:
+        from src.config import load_settings
+        from src.data.loader import load_raw_data
+        from src.evaluation.shap_explain import aggregate_shap_importances, compute_shap_values
+        from src.features.schema import ALL_FEATURES
+
+        model = load_model()
+        if model is None:
+            return None
+
+        settings = load_settings()
+        df = load_raw_data(settings)
+        X = df[ALL_FEATURES].sample(n=min(300, len(df)), random_state=42)
+        shap_exp = compute_shap_values(model, X)
+        return aggregate_shap_importances(shap_exp)
+    except Exception:
+        return None
+
+
+def _shap_global_chart(shap_df: pd.DataFrame) -> go.Figure:
+    """Interactive Plotly bar chart of mean |SHAP| importances."""
+    df = shap_df.sort_values("mean_abs_shap", ascending=True).tail(10)
+    top3_cutoff = df["mean_abs_shap"].nlargest(3).min()
+    colors = ["#7C3AED" if v >= top3_cutoff else "#C4B5FD" for v in df["mean_abs_shap"]]
+
+    fig = go.Figure(go.Bar(
+        x=df["mean_abs_shap"].values,
+        y=df["feature"].values,
+        orientation="h",
+        marker={"color": colors, "line": {"width": 0}},
+        text=[f"{v:.3f}" for v in df["mean_abs_shap"]],
+        textposition="outside",
+        textfont={"size": 10, "color": "#64748B"},
+        hovertemplate="<b>%{y}</b><br>Mean |SHAP|: %{x:.4f}<extra></extra>",
+    ))
+    fig.update_layout(
+        height=280,
+        margin={"t": 8, "b": 8, "l": 8, "r": 48},
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"family": "Inter"},
+        xaxis={"showgrid": True, "gridcolor": "#F1F5F9", "zeroline": False, "showticklabels": False},
+        yaxis={"showgrid": False, "tickfont": {"size": 11, "color": "#475569"}},
+        bargap=0.3,
+    )
+    return fig
+
+
 def render_model_info_tab() -> None:
     meta = load_metadata()
 
@@ -292,3 +349,42 @@ def render_model_info_tab() -> None:
             st.plotly_chart(fi_chart, use_container_width=True, config={"displayModeBar": False})
         else:
             st.caption("Feature importances not available.")
+
+    # ── SHAP Global Importance ───────────────────────────────────────────────
+    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+
+    shap_left, shap_right = st.columns([1.1, 1], gap="large")
+    with shap_left:
+        st.markdown(
+'<div class="section-header">SHAP Global Feature Importance</div>',
+            unsafe_allow_html=True,
+        )
+        shap_df = _compute_global_shap()
+        if shap_df is not None:
+            st.plotly_chart(
+                _shap_global_chart(shap_df),
+                use_container_width=True,
+                config={"displayModeBar": False},
+            )
+            st.caption("Mean |SHAP value| across 300 sampled patients — measures each feature's average impact on predictions")
+        else:
+            st.caption("SHAP values not available. Ensure model and data are present.")
+
+    with shap_right:
+        st.markdown(
+'<div class="section-header">Understanding SHAP</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown("""
+**SHAP (SHapley Additive exPlanations)** decomposes each prediction into
+per-feature contributions.
+
+- **Global view** (left): average impact across many patients — which features matter most overall
+- **Per-prediction view** (Prediction tab): why *this specific patient* got their risk score
+
+Unlike standard feature importances (which measure split quality in trees),
+SHAP values are grounded in game theory and provide **consistent, locally accurate** explanations.
+
+> Higher mean |SHAP| = the feature moves predictions further from the baseline on average.
+"""
+        )

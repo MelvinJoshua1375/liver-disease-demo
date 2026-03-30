@@ -1,0 +1,18 @@
+name: Keep Streamlit Alive
+
+on:
+  schedule:
+    # Ping every 14 minutes to prevent hibernation
+    - cron: "*/14 * * * *"
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake Streamlit app
+        run: |
+          curl -sf --max-time 30 \
+            "https://liver-disease-project.streamlit.app/" \
+            -o /dev/null -w "HTTP %{http_code} in %{time_total}s\n" \
+          || echo "App may still be waking up"

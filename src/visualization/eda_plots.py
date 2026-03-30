@@ -70,7 +70,7 @@ def plot_percentage_stacked_chart(
     ax.bar(bins_str, pos_pct, bottom=neg_pct, label="Positive", color=PALETTE["positive"], width=0.6)
 
     # Add percentage labels on each segment
-    for i, (neg, pos) in enumerate(zip(neg_pct, pos_pct)):
+    for i, (neg, pos) in enumerate(zip(neg_pct, pos_pct, strict=False)):
         if neg > 0:
             ax.text(i, neg / 2, f"{neg:.1f}%", ha="center", va="center",
                     fontsize=9, color="white", fontweight="bold")

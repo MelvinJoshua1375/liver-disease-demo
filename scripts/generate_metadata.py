@@ -117,7 +117,6 @@ def main():
             best_auc = auc
             best_acc = acc
             y_pred_best  = y_pred
-            y_proba_best = y_proba
 
         print(f"  {name}: F1={f1:.3f}, AUC={auc:.3f}")
 
