@@ -52,6 +52,13 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
 
+[tool.coverage.run]
+omit = [
+    "src/visualization/*",
+    "src/evaluation/calibration.py",
+    "src/features/woe_viz.py",
+]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 100
