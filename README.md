@@ -47,9 +47,8 @@ make install-dev     # Install dev dependencies (pytest, ruff, etc.)
 make test            # Run pytest (80%+ coverage)
 make lint            # Ruff linter
 make train           # Train model -> models/liver_disease_model.pkl
-make generate-ppts   # Auto-generate EDA + Modelling PPTs
 make run             # Launch Streamlit app locally (http://localhost:8501)
-make clean           # Remove generated outputs and caches
+make clean           # Remove caches
 ```
 
 ## Project Structure
@@ -64,13 +63,13 @@ src/                              # All reusable logic (single source of truth)
 app/                              # Streamlit app (3 tabs)
   components/                     # Prediction, Model Info, About, styles, utils
 notebooks/                        # Lean narrative notebooks (import from src/)
-scripts/                          # train_model.py, generate_metadata.py, generate_ppts.py
-tests/                            # 76+ pytest tests (TDD-first)
+scripts/                          # train_model.py, generate_metadata.py
+tests/                            # 100+ pytest tests (TDD-first)
 models/                           # Trained pipeline + metadata JSON
 config/                           # settings.yaml
 docs/
   screenshots/                    # App screenshots for README
-  presentations/                  # Original PowerPoint files
+  Statisical Exploration...pptx   # Original EDA presentation
 ```
 
 ## Key Features

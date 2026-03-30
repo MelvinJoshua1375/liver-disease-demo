@@ -1,4 +1,4 @@
-.PHONY: help install install-dev lint format test train generate-metadata generate-ppts run clean
+.PHONY: help install install-dev lint format test train generate-metadata run clean
 
 PYTHON := python
 PIP := pip
@@ -31,15 +31,11 @@ train: ## Train model -> models/liver_disease_model.pkl
 generate-metadata: ## Generate model metadata JSON
 	$(PYTHON) scripts/generate_metadata.py
 
-generate-ppts: ## Generate EDA + Modelling PowerPoint presentations
-	$(PYTHON) scripts/generate_ppts.py
-
 # ── Run ───────────────────────────────────────────────────────────────────────
 run: ## Launch Streamlit app locally
 	streamlit run app/app.py
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
-clean: ## Remove generated outputs and caches
-	rm -rf outputs/charts/ outputs/ppts/
+clean: ## Remove caches
 	rm -rf __pycache__ .pytest_cache .ruff_cache
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
