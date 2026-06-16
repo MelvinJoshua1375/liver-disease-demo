@@ -1,6 +1,6 @@
-# Liver Disease Prediction
+# Clinical Liver Risk Analysis Through Explainable Hybrid Intelligence
 
-[![CI](https://github.com/MelvinJoshua1375/liver-disease-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/MelvinJoshua1375/liver-disease-demo/actions/workflows/ci.yml)
+[![CI](https://github.com/MelvinJoshua1375/liver-explainable-hybrid-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/MelvinJoshua1375/liver-explainable-hybrid-intelligence/actions/workflows/ci.yml)
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://liver-disease-project.streamlit.app/)
 
 Binary classification pipeline predicting liver disease from patient clinical and demographic data. Portfolio-quality ML project with proper architecture, TDD, Optuna hyperparameter tuning, WoE/IV analysis, SHAP explanations, and Streamlit deployment with CI/CD.
@@ -33,8 +33,8 @@ Binary classification pipeline predicting liver disease from patient clinical an
 ## Setup
 
 ```bash
-git clone https://github.com/MelvinJoshua1375/liver-disease-demo.git
-cd liver-disease-demo
+git clone https://github.com/MelvinJoshua1375/liver-explainable-hybrid-intelligence.git
+cd liver-explainable-hybrid-intelligence
 pip install -e ".[dev]"
 python scripts/download_data.py   # or place CSV manually at data/liver_disease_data.csv
 ```
